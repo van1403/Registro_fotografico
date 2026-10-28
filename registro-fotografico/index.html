@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17271f">
+  <title>Registro fotográfico de fiscalización</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <header class="barra-superior">
+    <div class="marca">
+      <span class="marca-sello" aria-hidden="true"><span></span></span>
+      <div>
+        <p class="marca-kicker">Bitácora de campo</p>
+        <h1>Registro fotográfico</h1>
+      </div>
+    </div>
+    <div class="selector-proyecto">
+      <label for="selector-proyecto" class="sr-only">Proyecto activo</label>
+      <select id="selector-proyecto" aria-label="Proyecto activo"></select>
+      <button type="button" id="btn-nuevo-proyecto" class="btn btn-nuevo"><span aria-hidden="true">＋</span> Nuevo</button>
+    </div>
+  </header>
+
+  <nav class="pestanas" role="tablist" aria-label="Secciones">
+    <button type="button" role="tab" class="pestana" id="t-datos" data-pestana="datos" aria-selected="true" aria-controls="tab-datos"><span>01</span> Datos</button>
+    <button type="button" role="tab" class="pestana" id="t-fotos" data-pestana="fotos" aria-selected="false" aria-controls="tab-fotos"><span>02</span> Fotografías</button>
+    <button type="button" role="tab" class="pestana" id="t-vista" data-pestana="vista" aria-selected="false" aria-controls="tab-vista"><span>03</span> Anexo</button>
+  </nav>
+
+  <main>
+    <!-- ================= DATOS DE LA FISCALIZACIÓN ================= -->
+    <section id="tab-datos" class="panel" role="tabpanel" aria-labelledby="t-datos">
+      <div class="encabezado-seccion">
+        <div><p class="seccion-kicker">Registro de campo</p><h2 id="titulo-formulario">Nuevo proyecto</h2></div>
+        <span class="marca-paso" aria-hidden="true">01</span>
+      </div>
+      <form id="form-proyecto" novalidate>
+        <div class="campo">
+          <label for="p-codigo">Código de práctica</label>
+          <input id="p-codigo" name="codigo" type="text" maxlength="60" autocomplete="off" placeholder="Ej.: PRACTICA 001">
+          <small class="error-campo" id="e-codigo"></small>
+        </div>
+        <div class="campo">
+          <label for="p-fecha">Fecha de la fiscalización</label>
+          <input id="p-fecha" name="fecha" type="date">
+          <small class="error-campo" id="e-fecha"></small>
+        </div>
+        <div class="campo">
+          <label for="p-lugar">Lugar</label>
+          <input id="p-lugar" name="lugar" type="text" maxlength="120" autocomplete="off" placeholder="Ej.: Espacio de práctica autorizado">
+          <small class="error-campo" id="e-lugar"></small>
+        </div>
+        <div class="campo">
+          <label for="p-fiscalizador">Nombre del fiscalizador</label>
+          <input id="p-fiscalizador" name="fiscalizador" type="text" maxlength="120" autocomplete="name" placeholder="Ej.: Alumno de práctica">
+          <small class="error-campo" id="e-fiscalizador"></small>
+        </div>
+        <div class="campo">
+          <label for="p-establecimiento">Establecimiento o unidad (ficticio)</label>
+          <input id="p-establecimiento" name="establecimiento" type="text" maxlength="120" autocomplete="off" placeholder="Ej.: Establecimiento ficticio S.A.">
+          <small class="error-campo" id="e-establecimiento"></small>
+        </div>
+
+        <p id="aviso-sucio" class="aviso-sucio" hidden>Hay cambios sin guardar.</p>
+
+        <div class="acciones">
+          <button type="submit" class="btn btn-primario btn-grande">Guardar proyecto</button>
+          <button type="button" id="btn-eliminar-proyecto" class="btn btn-peligro" hidden>Eliminar proyecto</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ================= FOTOGRAFÍAS ================= -->
+    <section id="tab-fotos" class="panel" role="tabpanel" aria-labelledby="t-fotos" hidden>
+      <div class="encabezado-seccion">
+        <div><p class="seccion-kicker">Evidencia visual</p><h2>Fotografías <span id="contador-fotos" class="insignia">0</span></h2></div>
+        <span class="marca-paso" aria-hidden="true">02</span>
+      </div>
+
+      <div class="acciones acciones-captura">
+        <button type="button" id="btn-tomar" class="btn btn-primario btn-grande">📷 Tomar foto</button>
+        <button type="button" id="btn-agregar" class="btn btn-grande">🖼️ Agregar imágenes</button>
+      </div>
+      <input id="entrada-camara" type="file" accept="image/*" capture="environment" hidden>
+      <input id="entrada-galeria" type="file" accept="image/*" multiple hidden>
+
+      <p class="nota">
+        La fecha y hora de cada foto son las del momento en que se incorporó a esta aplicación;
+        no certifican la fecha original de la imagen.
+      </p>
+
+      <p id="galeria-vacia" class="vacio">Aún no hay fotografías. Usa «Tomar foto» o «Agregar imágenes».</p>
+      <div id="galeria" class="galeria"></div>
+    </section>
+
+    <!-- ================= VISTA PREVIA ================= -->
+    <section id="tab-vista" class="panel" role="tabpanel" aria-labelledby="t-vista" hidden>
+      <div class="encabezado-seccion">
+        <div><p class="seccion-kicker">Revisión final</p><h2>Vista previa del anexo</h2></div>
+        <span class="marca-paso" aria-hidden="true">03</span>
+      </div>
+      <p class="nota">Así quedarán el orden y la numeración del Word (dos fotografías por página).</p>
+      <div id="problemas" class="problemas" role="alert" hidden></div>
+      <div id="vista" class="vista"></div>
+    </section>
+  </main>
+
+  <!-- Barra fija para generar el Word -->
+  <div id="barra-exportar" class="barra-exportar" hidden>
+    <span id="resumen-exportar" class="resumen-exportar"></span>
+    <button type="button" id="btn-generar" class="btn btn-primario btn-grande">📄 Generar Word</button>
+  </div>
+
+  <!-- Mensajes breves (éxito / error) -->
+  <div id="avisos" class="avisos" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ================= PLANTILLA DE UNA FOTO (se clona para cada registro) ================= -->
+  <template id="plantilla-foto">
+    <article class="foto-card">
+      <div class="foto-imagen">
+        <img alt="">
+        <span class="foto-numero"></span>
+      </div>
+      <div class="foto-cuerpo">
+        <label class="foto-etiqueta">Descripción</label>
+        <textarea data-campo="descripcion" rows="3" maxlength="500" placeholder="Describe lo que muestra la foto"></textarea>
+        <p class="foto-meta"></p>
+        <p class="estado-guardado" aria-live="polite"></p>
+        <div class="foto-acciones">
+          <button type="button" class="btn btn-chico" data-accion="subir">↑ Subir</button>
+          <button type="button" class="btn btn-chico" data-accion="bajar">↓ Bajar</button>
+          <button type="button" class="btn btn-chico btn-peligro" data-accion="eliminar">🗑 Eliminar</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <!-- ================= DIÁLOGO: VISTA PREVIA ANTES DE CONFIRMAR ================= -->
+  <dialog id="dlg-previa" aria-labelledby="previa-titulo">
+    <form method="dialog">
+      <h2 id="previa-titulo">Vista previa de la foto</h2>
+      <img id="previa-img" alt="Vista previa de la foto que se va a guardar">
+      <p id="previa-info" class="nota"></p>
+      <label for="previa-desc">Descripción</label>
+      <textarea id="previa-desc" rows="3" maxlength="500" placeholder="Describe lo que muestra la foto"></textarea>
+      <div class="acciones">
+        <button value="guardar" class="btn btn-primario btn-grande">Confirmar y guardar</button>
+        <button value="cancelar" class="btn">Cancelar</button>
+        <button value="cancelar-todo" id="previa-cancelar-todo" class="btn" hidden>Cancelar todas</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ================= DIÁLOGO: CONFIRMACIÓN ================= -->
+  <dialog id="dlg-confirmar" aria-labelledby="confirmar-titulo">
+    <form method="dialog">
+      <h2 id="confirmar-titulo">Confirmar</h2>
+      <p id="confirmar-texto"></p>
+      <div class="acciones">
+        <button value="ok" id="confirmar-ok" class="btn btn-peligro">Aceptar</button>
+        <button value="cancelar" class="btn">Cancelar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <noscript><p class="vacio">Esta aplicación necesita JavaScript habilitado.</p></noscript>
+
+  <script src="js/vendor/docx.iife.js"></script>
+  <script src="js/almacenamiento.js"></script>
+  <script src="js/captura.js"></script>
+  <script src="js/exportar.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
