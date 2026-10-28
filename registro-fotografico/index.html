@@ -154,6 +154,25 @@
     </form>
   </dialog>
 
+  <!-- ================= DIÁLOGO: VARIAS FOTOS ================= -->
+  <dialog id="dlg-lote" class="dlg-lote" aria-labelledby="lote-titulo">
+    <form method="dialog">
+      <div class="encabezado-dialogo">
+        <div>
+          <p class="seccion-kicker">Selección realizada</p>
+          <h2 id="lote-titulo">Revisa las fotografías</h2>
+        </div>
+        <span id="lote-cantidad" class="insignia">0</span>
+      </div>
+      <p class="nota">Todas las imágenes aparecerán juntas. Puedes escribir una descripción distinta para cada una antes de guardar.</p>
+      <div id="lote-galeria" class="lote-galeria"></div>
+      <div class="acciones acciones-dialogo">
+        <button value="guardar-lote" id="lote-guardar" class="btn btn-primario btn-grande">Guardar todas</button>
+        <button value="cancelar-lote" class="btn">Cancelar selección</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- ================= DIÁLOGO: CONFIRMACIÓN ================= -->
   <dialog id="dlg-confirmar" aria-labelledby="confirmar-titulo">
     <form method="dialog">

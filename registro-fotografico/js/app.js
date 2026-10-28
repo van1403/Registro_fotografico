@@ -387,17 +387,122 @@
   }
 
   // ================= Captura de fotografías =================
-  function iniciarCaptura(archivos) {
+  async function iniciarCaptura(archivos) {
     if (!hayProyecto()) {
       avisar("Primero guarda los datos del proyecto.", "error");
       return;
     }
-    estado.cola.push(...archivos);
-    procesarCola();
+    const seleccion = Array.from(archivos);
+    if (seleccion.length === 0) return;
+
+    if (seleccion.length === 1) {
+      estado.cola.push(...seleccion);
+      procesarCola();
+      return;
+    }
+
+    if (estado.procesando) {
+      avisar("Hay otra selección abierta. Termínala antes de elegir más fotografías.", "info");
+      return;
+    }
+
+    estado.procesando = true;
+    try {
+      const preparadas = [];
+      let fallidas = 0;
+      await Promise.all(seleccion.map(async (archivo) => {
+        try {
+          preparadas.push({ archivo, imagen: await Captura.prepararImagen(archivo) });
+        } catch (error) {
+          fallidas++;
+          avisar(`No se pudo usar «${archivo.name || "la imagen"}»: ${error.message}.`, "error");
+        }
+      }));
+      preparadas.sort((a, b) => seleccion.indexOf(a.archivo) - seleccion.indexOf(b.archivo));
+
+      const descripciones = await pedirVistaLote(preparadas);
+      if (descripciones === null) {
+        avisar("Selección cancelada. No se agregó ninguna foto.", "info");
+        return;
+      }
+
+      let guardadas = 0;
+      for (let indice = 0; indice < preparadas.length; indice++) {
+        try {
+          await guardarNuevaFoto(
+            estado.proyecto.id,
+            preparadas[indice].imagen,
+            descripciones[indice],
+            preparadas[indice].archivo.name
+          );
+          guardadas++;
+        } catch (error) {
+          fallidas++;
+          avisar(`No se pudo guardar «${preparadas[indice].archivo.name || "la foto"}»: ${error.message}`, "error");
+        }
+      }
+      if (guardadas > 0) {
+        avisar(`${guardadas} ${guardadas === 1 ? "foto guardada" : "fotos guardadas"}.${fallidas ? ` ${fallidas} no se pudo procesar.` : ""}`);
+      }
+    } finally {
+      estado.procesando = false;
+    }
   }
 
   function capturaCancelada() {
     avisar("No se agregó ninguna foto (captura cancelada o sin permiso). Puedes intentarlo de nuevo.", "info");
+  }
+
+  async function pedirVistaLote(imagenes) {
+    return new Promise((resolve) => {
+      const dialogo = $("#dlg-lote");
+      const contenedor = $("#lote-galeria");
+      const urls = [];
+      contenedor.replaceChildren();
+      $("#lote-cantidad").textContent = String(imagenes.length);
+
+      imagenes.forEach((item, indice) => {
+        const url = URL.createObjectURL(item.imagen.blob);
+        urls.push(url);
+        const tarjeta = document.createElement("article");
+        tarjeta.className = "lote-foto";
+        const nombre = item.archivo.name || `Fotografía ${indice + 1}`;
+        const figura = document.createElement("figure");
+        const vista = document.createElement("img");
+        vista.src = url;
+        vista.alt = `Vista previa de ${nombre}`;
+        figura.appendChild(vista);
+
+        const cuerpo = document.createElement("div");
+        cuerpo.className = "lote-foto-cuerpo";
+        const nombreVisible = document.createElement("p");
+        nombreVisible.className = "lote-foto-nombre";
+        nombreVisible.title = nombre;
+        nombreVisible.textContent = nombre;
+        const etiqueta = document.createElement("label");
+        etiqueta.htmlFor = `lote-desc-${indice}`;
+        etiqueta.textContent = "Descripción";
+        const campo = document.createElement("textarea");
+        campo.id = `lote-desc-${indice}`;
+        campo.rows = 3;
+        campo.maxLength = 500;
+        campo.placeholder = "Describe lo que muestra esta foto";
+        cuerpo.append(nombreVisible, etiqueta, campo);
+        tarjeta.append(figura, cuerpo);
+        contenedor.appendChild(tarjeta);
+      });
+
+      dialogo.returnValue = "";
+      const alCerrar = () => {
+        dialogo.removeEventListener("close", alCerrar);
+        const descripciones = Array.from(contenedor.querySelectorAll("textarea"), (campo) => campo.value.trim());
+        urls.forEach((url) => URL.revokeObjectURL(url));
+        contenedor.replaceChildren();
+        resolve(dialogo.returnValue === "guardar-lote" ? descripciones : null);
+      };
+      dialogo.addEventListener("close", alCerrar);
+      dialogo.showModal();
+    });
   }
 
   /** Procesa de a una las imágenes pendientes: vista previa -> confirmar -> guardar. */
